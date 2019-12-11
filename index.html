@@ -1,0 +1,93 @@
+<html>
+<head>
+<meta http-equiv="CACHE-CONTROL" content="NO-CACHE" />
+<meta http-equiv="MAX-AGE" content="0" />
+<meta http-equiv="MUST-REVALIDATE" />
+<meta http-equiv="NO-STORE" />
+<meta http-equiv="PRAGMA" content="NO-CACHE" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+<title>BlueNode server</title>
+</head>
+
+<body>
+
+<div id=container>
+	<div id=top-bar>
+	{username} <a href="/logout.html">logout</a>
+	</div>
+
+	<h1>{title}</h1>
+	{infolink}
+	<br>
+	<br>
+
+	<div>
+	<h2>Current uploaded files:</h2>
+	{current}
+	</div>
+
+	<br>
+
+	<div id=exec-log=div>
+	<h2>System Message</h2>
+	<em>{curmsg}</em>
+	</div>
+
+	<br>
+	<div id=content-div>
+
+		<div id=exec-log-div>
+		<h2>Console</h2>
+		You can also drag and drop a file to upload<br>
+		<form action="" method="post" enctype="multipart/form-data">
+		<input type="file" name="infile" id="formfile">
+		<br>
+		Upload target:
+		<select name="target">
+		{targets}
+		</select>
+		<br>
+		<input type="submit" value="Upload">
+		</form>
+		<a href="/exec.html">Submit for execution</a>
+		--
+		<a href="/abort.html">abort execution if any</a>
+		</div>
+		<br><br>
+
+
+
+		<div id=exec-log-div>
+		<h2>Current execution log</h2>
+		<a href="/">refresh log</a>
+		<br><br>
+		{curlog}
+		</div>
+
+	</div>
+</div>
+
+
+<script>
+let doce = document.documentElement;
+var filein = document.getElementById("formfile");
+
+doce.addEventListener('dragover', (e) => {
+		e.preventDefault();
+		});
+
+doce.addEventListener('drop', (e) => {
+	e.preventDefault();
+	var infiles = e.dataTransfer.files;
+	if ( infiles.length > 1 ) {
+		alert( 'Only enter one file' );
+		return;
+	} 
+	
+	filein.files = e.dataTransfer.files;
+});
+</script>
+
+</body>
+</html>
+

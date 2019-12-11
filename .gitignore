@@ -1,0 +1,7 @@
+uploaded
+*.o
+obj
+build
+vc707
+kc705
+.*.sw?

@@ -1,0 +1,14 @@
+{
+	"_comment":"",
+
+	"title":"BlueNode environment for vanilla HwMain testbench",
+	"infolink":"http://ics.uci.edu/~swjun",
+
+	"targets":{
+		"hwmain": "HwMain.bsv"
+	},
+
+	"exec":"exec.sh",
+	"execslots":"1",
+	"exectimeout":"10"
+}
