@@ -10,9 +10,11 @@ void init() {
 	g_init = true;
 
 	g_mem = malloc(0x10000); // 64KB
-	FILE* objbin = fopen("../benchmarks/test.bin", "rb");
-	size_t r = fread(g_mem, 4, 0x10000/4, objbin);
-	printf( "binary read, %ld bytes\n", r );
+	FILE* objbin = fopen("test.bin", "rb");
+	if ( objbin ) {
+		size_t r = fread(g_mem, 4, 0x10000/4, objbin);
+		printf( "binary read, %ld bytes\n", r );
+	}
 }
 
 extern "C" uint32_t memRead(uint32_t addr, uint32_t bytes) {

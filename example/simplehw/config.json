@@ -2,7 +2,7 @@
 	"_comment":"",
 
 	"title":"BlueNode environment for vanilla HwMain testbench",
-	"infolink":"http://ics.uci.edu/~swjun",
+	"infolink":"https://ics.uci.edu/~swjun",
 
 	"targets":{
 		"hwmain": "HwMain.bsv"
