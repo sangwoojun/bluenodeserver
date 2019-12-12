@@ -9,6 +9,7 @@
 	},
 
 	"exec":"exec.sh",
-	"execslots":"1",
-	"exectimeout":"10"
+	"execslots":"2",
+	"exectimeout":"120",
+	"maxsize":"1048576"
 }

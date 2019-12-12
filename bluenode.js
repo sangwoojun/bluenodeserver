@@ -11,6 +11,7 @@ var updir = "uploaded/";
 
 var app = express();
 app.use(session({secret:"cs152_invys", resave:false, saveUninitialized:false}));
+//app.use(express.limit('1mb'));
 
 //var configjson = fs.readFileSync(__dirname + "/config.json");
 var configjson = fs.readFileSync("config.json");
@@ -40,10 +41,19 @@ function formatteddate() {
 	var dd = now.getDate();
 	if ( dd < 10 ) dd = "0"+dd;
 	var h = now.getHours();
+	if ( h < 10 ) h = "0"+h;
 	var m = now.getMinutes();
+	if ( m < 10 ) m = "0"+m;
 	var s = now.getSeconds();
+	if ( s < 10 ) s = "0"+s;
 	var ms = now.getMilliseconds();
+	if ( ms < 10 ) ms = "00"+ms;
+	else if ( ms < 100 ) ms = "0"+ms;
 	return now.getFullYear()+"-"+mm+"-"+dd+" "+h+":"+m+":"+s+":"+ms;
+}
+
+function consolelog(msg) {
+	console.log(formatteddate() + "] " + msg);
 }
 
 
@@ -132,14 +142,23 @@ app.post('/', function(req,res) {
 		return;
 	}
 
+	var userid = req.session.userid;
+
 	form.parse(req, function (err, fields, files) {
 		var targetfilename = targets[fields.target];
-		console.log(">> "+Object.keys(files).length + " - " + targetfilename + ", " + Object.keys(fields).length);
+		consolelog("File upload "+ userid + " " + files.infile.name + " " + files.infile.size + " " + Object.keys(files).length + " - " + targetfilename + ", " + Object.keys(fields).length);
 
 		//console.log(util.inspect(files.infile));
 
 		if ( !files.infile || !files.infile.name || !targetfilename ) {
 			serveIndex(req, res, "Invalid file/options" );
+			return;
+		}
+
+		if ( files.infile.size > config.maxsize ) {
+			fs.unlinkSync(files.infile.path);
+			serveIndex(req, res, "Upload file too large! Incident logged" );
+			consolelog("Large file upload request from "+userid+" " + files.infile.name + " " + files.infile.size);
 			return;
 		}
 
@@ -181,7 +200,8 @@ app.get('/abort.html', function(req,res) {
 		serveMessage(res, "No process to abort!" );
 		return;
 	}
-	execreqmap[userid].child.kill("SIGINT");
+	//execreqmap[userid].child.kill("SIGINT");
+	process.kill(-execreqmap[userid].child.pid);
 
 	console.log("Process " + execreqmap[userid].pid + " from user " + userid + " killed" );
 	delete execreqmap[userid];
@@ -251,10 +271,27 @@ function checkPidAlive(pid) {
 function pruneLongProc() {
 	var now = Math.floor(Date.now());
 	for (var uid in execreqmap) {
+		if ( !execreqmap[uid].exectime ) continue;
+
+		if (!checkPidAlive(execreqmap[uid].pid)) {
+			console.log("Process " + execreqmap[uid].pid + " done" );
+			delete execreqmap[uid];
+			var dtargetdir = updir+uid+'/';
+			fs.appendFileSync(targetdir+logname, formatteddate() + ' Process finished\n');
+
+			if ( cntinflight > 0 ) {
+				cntinflight = cntinflight - 1;
+			} else {
+				console.log("ERROR! proc exited after cntinflight == 0\n");
+			}
+			continue;
+		}
+
 		if ( now - execreqmap[uid].exectime < exectimeout*1000 ) continue;
 
 		if (checkPidAlive(execreqmap[uid].pid)) {
-			execreqmap[uid].child.kill("SIGINT");
+			//execreqmap[uid].child.kill("SIGINT");
+			process.kill(-execreqmap[uid].child.pid);
 
 			console.log("Process " + execreqmap[uid].pid + " from user " + uid + " killed due to timeout of " + exectimeout + " s" );
 			delete execreqmap[uid];
@@ -289,7 +326,15 @@ function startNextExec() {
 	// copy exec.sh to uploads/userid/src
 	fs.copyFileSync("exec.sh", updir+userid+"/src/exec.sh");
 	// run exec at uploads/userid/src
-	var child = childproc.exec('bash exec.sh >> ../'+logname+' 2>&1',{"cwd":updir+userid+"/src/"}, function (e, stdout, stderr) {
+	var child = childproc.spawn('bash', ["exec.sh"],{"cwd":updir+userid+"/src/", detached:true});
+	child.stdout.on('data', function(data) {
+		fs.appendFileSync(targetdir+logname, "" + data );
+	});
+	child.stderr.on('data', function(data) {
+		fs.appendFileSync(targetdir+logname, "" + data );
+	});
+	/*
+	var child = childproc.exec('bash exec.sh >> ../'+logname+' 2>&1',{"cwd":updir+userid+"/src/", maxBuffer: 1024*1024*4}, function (e, stdout, stderr) {
 		for (var uid in execreqmap) {
 			if (!checkPidAlive(execreqmap[uid].pid)) {
 				console.log("Process " + execreqmap[uid].pid + " done" );
@@ -305,6 +350,7 @@ function startNextExec() {
 			}
 		}
 	});
+	*/
 	// save timestamp to map
 	var timeStamp = Math.floor(Date.now());
 	execreqmap[userid].exectime  = timeStamp;
