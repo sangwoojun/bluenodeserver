@@ -62,6 +62,10 @@ function checkSession(req) {
 	return false;
 }
 
+function serveLogin(res) {
+	res.sendFile(__dirname+"/login.html");
+}
+
 function serveMessage(res, msg) {
 	var msgtemplate = fs.readFileSync(__dirname + "/message.html").toString();
 	msgtemplate = msgtemplate.replace("{message}", msg);
@@ -104,7 +108,7 @@ function serveIndex(req, res, curmsg) {
 	indextemplate = indextemplate.replace("{curlog}", curlog);
 	indextemplate = indextemplate.replace("{username}", username);
 	indextemplate = indextemplate.replace("{title}", title);
-	indextemplate = indextemplate.replace("{infolink}", "<a href='"+infolink+"'>about this page</a>");
+	indextemplate = indextemplate.replace("{infolink}", "<a href='"+infolink+"'>Supplement material</a>");
 	res.write(indextemplate);
 	res.end();
 }
@@ -112,9 +116,12 @@ function serveIndex(req, res, curmsg) {
 app.get('/style.css', function(req,res) {
 	res.sendFile(__dirname+"/style.css");
 });
+app.get('/login.html', function(req,res) {
+	res.sendFile(__dirname+"/login.html");
+});
 
 app.get('/', function(req,res) {
-	if ( req.session.userid ) {
+	if ( checkSession(req) ) {
 		//console.log("id " + req.session.userid );
 		serveIndex(req, res, "");
 	} else {
@@ -125,11 +132,10 @@ app.get('/', function(req,res) {
 		if ( userid && users[userid] && users[userid] == key ) {
 			req.session.userid = userid;
 			serveIndex(req, res, "Logged in as " + userid);
-			console.log( "Login success: " + userid + " " + key );
+			consolelog( "Login success: " + userid + " " + key );
 		} else {
-			res.write("User id key mismatch");
-			res.end();
-			console.log( "Login failure: " + userid + " " + key );
+			serveLogin(res);
+			consolelog( "Login failure: " + userid + " " + key );
 		}
 	}
 });
@@ -137,8 +143,7 @@ app.get('/', function(req,res) {
 app.post('/', function(req,res) {
 	var form = new formidable.IncomingForm();
 	if (!checkSession(req)) {
-		res.write("Logged out -- please re-log in");
-		res.end();
+		serveLogin(res);
 		return;
 	}
 
@@ -252,6 +257,10 @@ app.get('/exec.html', function(req,res) {
 for ( var key in targets) {
 	//console.log("requesting " + key + " " + targets[key]);
 	app.get('/'+targets[key], function(req,res) {
+		if ( !checkSession(req) ) {
+			serveLogin(res);
+			return;
+		}
 		//var fpath = __dirname+"/"+updir+req.session.userid+"/"+targets[key];
 		var fpath = process.cwd()+"/"+updir+req.session.userid+req.url;
 		res.sendFile(fpath);
@@ -259,8 +268,16 @@ for ( var key in targets) {
 }
 app.get('/'+logname, function(req,res) {
 	//var fpath = __dirname+"/"+updir+req.session.userid+"/"+logname;
+	if ( !checkSession(req) ) {
+		serveLogin(res);
+		return;
+	}
 	var fpath = updir+req.session.userid+"/"+logname;
 	res.sendFile(fpath);
+});
+app.get('/'+infolink, function(req,res) {
+	//var fpath = __dirname+"/"+updir+req.session.userid+"/"+logname;
+	res.sendFile(process.cwd()+"/"+infolink);
 });
 
 function checkPidAlive(pid) {
@@ -282,7 +299,7 @@ function pruneLongProc() {
 			if ( cntinflight > 0 ) {
 				cntinflight = cntinflight - 1;
 			} else {
-				console.log("ERROR! proc exited after cntinflight == 0\n");
+				consolelog("ERROR! proc exited after cntinflight == 0, "+uid+"\n");
 			}
 			continue;
 		}
@@ -293,14 +310,14 @@ function pruneLongProc() {
 			//execreqmap[uid].child.kill("SIGINT");
 			process.kill(-execreqmap[uid].child.pid);
 
-			console.log("Process " + execreqmap[uid].pid + " from user " + uid + " killed due to timeout of " + exectimeout + " s" );
+			consolelog("Process " + execreqmap[uid].pid + " from user " + uid + " killed due to timeout of " + exectimeout + " s" );
 			delete execreqmap[uid];
 			var targetdir = updir+uid+'/';
 			fs.appendFileSync(targetdir+logname, formatteddate() + ' Process killed due to timeout of '+exectimeout+'s\n');
 			if ( cntinflight > 0 ) {
 				cntinflight = cntinflight - 1;
 			} else {
-				console.log("ERROR! proc exited after cntinflight == 0\n");
+				consolelog("ERROR! proc exited after cntinflight == 0, "+uid+"\n");
 			}
 		}
 	}
@@ -316,12 +333,13 @@ function startNextExec() {
 	var targetdir = updir+userid+'/';
 	if ( !execreqmap[userid] ) {
 		fs.appendFileSync(targetdir+logname, formatteddate() + ' env error! queue request exists but no queue map\n');
-		console.log("ERROR! queue request exists but no queue map\n");
+		consolelog("ERROR! queue request exists but no queue map from user "+userid+"\n");
 		return;
 	}
 
 	// copy src to uploads/userid
 	//fs.copyFileSync("src", updir+userid+"/");
+	childproc.execSync("rm -r " + updir+userid+"/src");
 	childproc.execSync("cp -r src " + updir+userid+"/");
 	// copy exec.sh to uploads/userid/src
 	fs.copyFileSync("exec.sh", updir+userid+"/src/exec.sh");
@@ -362,7 +380,7 @@ function startNextExec() {
 
 	cntinflight = cntinflight + 1;
 
-	console.log("child pid created " + child.pid + " current inflight " + cntinflight );
+	consolelog("child pid created from user " + userid + " " + child.pid + " current inflight " + cntinflight );
 
 	/*
 	var child = childproc.exec('timeout 120 "exec.sh"', function (e, stdout, stderr) {

@@ -8,7 +8,7 @@ endinterface
 
 module mkHwMain (HwMainIfc);
 	FIFO#(MemReq32) memReqQ <- mkFIFO;
-	Reg#(Bool) init <- mkReg(0);
+	Reg#(Bool) init <- mkReg(False);
 	rule initr(!init);
 		init <= True;
 		$display( "Hello World!" );
