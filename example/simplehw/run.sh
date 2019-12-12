@@ -1,3 +1,9 @@
+echo "------------------------------------------"
+echo "Server manually restarted"
+echo ""
+echo ""
+
+
 while :
 do
 	killall bluetcl
