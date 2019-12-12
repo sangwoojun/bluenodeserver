@@ -39,13 +39,8 @@
 		<div id=exec-log-div>
 		<h2>Console</h2>
 		You can also drag and drop a file to upload<br>
-		<form action="" method="post" enctype="multipart/form-data">
+		<form action="/" method="post" enctype="multipart/form-data">
 		<input type="file" name="infile" id="formfile">
-		<br>
-		Upload target:
-		<select name="target">
-		{targets}
-		</select>
 		<br>
 		<input type="submit" value="Upload">
 		</form>
@@ -60,6 +55,8 @@
 		<div id=exec-log-div>
 		<h2>Current execution log</h2>
 		<a href="/">refresh log</a>
+		--
+		<a href="/exec.log">download log</a>
 		<br><br>
 		{curlog}
 		</div>

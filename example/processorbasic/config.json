@@ -2,10 +2,12 @@
 	"_comment":"",
 
 	"title":"BlueNode environment for RV32I Experiments",
-	"infolink":"baseline/Processor.bsv",
+	"infolink":"baseline/material.tar",
 
 	"targets":{
-		"processor": "Processor.bsv"
+		"processor": "Processor.bsv",
+		"decode": "Decode.bsv",
+		"execute": "Execute.bsv"
 	},
 
 	"exec":"exec.sh",

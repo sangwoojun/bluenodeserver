@@ -150,12 +150,12 @@ app.post('/', function(req,res) {
 	var userid = req.session.userid;
 
 	form.parse(req, function (err, fields, files) {
-		var targetfilename = targets[fields.target];
-		consolelog("File upload "+ userid + " " + files.infile.name + " " + files.infile.size + " " + Object.keys(files).length + " - " + targetfilename + ", " + Object.keys(fields).length);
+		var targetfilename = files.infile.name;
+		consolelog("File upload "+ userid + " " + files.infile.name + " " + files.infile.size + " " + Object.keys(files).length + " - " + targetfilename + " " + Object.keys(fields).length);
 
 		//console.log(util.inspect(files.infile));
 
-		if ( !files.infile || !files.infile.name || !targetfilename ) {
+		if ( !files.infile || !files.infile.name ) {
 			serveIndex(req, res, "Invalid file/options" );
 			return;
 		}
@@ -166,6 +166,21 @@ app.post('/', function(req,res) {
 			consolelog("Large file upload request from "+userid+" " + files.infile.name + " " + files.infile.size);
 			return;
 		}
+	
+		var namematched = false;
+		for ( var key in targets) {
+			if ( targets[key] == files.infile.name ) {
+				 namematched = true;
+				 break;
+			}
+		}
+		if ( !namematched ) {
+			serveIndex(req, res, "Upload file not valid! ("+files.infile.name+") Incident logged" );
+			consolelog("Invalid file upload request from "+userid+" " + files.infile.name + " " + files.infile.size);
+			return;
+		}
+
+
 
 		var oldpath = files.infile.path;
 		//var targetdir = __dirname + '/'+updir+req.session.userid+'/';
@@ -241,7 +256,7 @@ app.get('/exec.html', function(req,res) {
 	if ( fs.existsSync(targetdir+logname) ) {
 		var stats = fs.statSync(targetdir+logname);
 		var mtime = stats.mtime.toString().replace(/ /g, "_");
-		fs.renameSync(targetdir+logname, targetdir+"."+logname+mtime);
+		fs.renameSync(targetdir+logname, targetdir+logname+"."+mtime);
 	}
 	
 	var timeStamp = Math.floor(Date.now());
@@ -272,7 +287,7 @@ app.get('/'+logname, function(req,res) {
 		serveLogin(res);
 		return;
 	}
-	var fpath = updir+req.session.userid+"/"+logname;
+	var fpath = process.cwd()+"/"+updir+req.session.userid+"/"+logname;
 	res.sendFile(fpath);
 });
 app.get('/'+infolink, function(req,res) {
