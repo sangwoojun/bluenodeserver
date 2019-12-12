@@ -1,0 +1,15 @@
+{
+	"_comment":"",
+
+	"title":"BlueNode environment for RV32I Experiments",
+	"infolink":"baseline/Processor.bsv",
+
+	"targets":{
+		"processor": "Processor.bsv"
+	},
+
+	"exec":"exec.sh",
+	"execslots":"2",
+	"exectimeout":"120",
+	"maxsize":"1048576"
+}
