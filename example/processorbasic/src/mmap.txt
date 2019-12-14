@@ -1,0 +1,6 @@
+# comment: + to load bin to memory location, ? to check if user write to location equals provided answer
++0 test.bin
++1000 data.bin
+?2000 0
+?2004 2
+?2048 8

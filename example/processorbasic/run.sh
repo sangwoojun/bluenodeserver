@@ -7,7 +7,7 @@ echo ""
 while :
 do
 	killall bluetcl
-	nodejs ../../bluenode.js | tee -a server.log
+	nodejs ../../bluenode.js 60002 | tee -a server.log
 	echo ""
 	echo ""
 	echo ""

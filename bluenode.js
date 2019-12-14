@@ -135,7 +135,11 @@ app.get('/', function(req,res) {
 			consolelog( "Login success: " + userid + " " + key );
 		} else {
 			serveLogin(res);
-			consolelog( "Login failure: " + userid + " " + key );
+			var ip = req.headers['x-forwarded-for'] || 
+				req.connection.remoteAddress || 
+				req.socket.remoteAddress ||
+				(req.connection.socket ? req.connection.socket.remoteAddress : null);
+			consolelog( "Login failure: " + userid + " " + key + " from " + ip );
 		}
 	}
 });
@@ -407,4 +411,9 @@ function startNextExec() {
 }
 setInterval(startNextExec, 500);
 
-app.listen(8000);
+var port = 8000;
+if ( process.argv.length > 2 ) {
+	port = process.argv[2];
+}
+
+app.listen(port);
