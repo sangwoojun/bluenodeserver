@@ -5,7 +5,8 @@
 	"infolink":"baseline/HwMain.bsv",
 
 	"targets":{
-		"hwmain": "HwMain.bsv"
+		"hwmain": "HwMain.bsv",
+		"memcontent": "memory.bin"
 	},
 
 	"exec":"exec.sh",

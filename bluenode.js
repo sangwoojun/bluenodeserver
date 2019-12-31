@@ -96,6 +96,7 @@ function serveIndex(req, res, curmsg) {
 	
 	if ( fs.existsSync(targetdir+logname) ) {
 		curlog = fs.readFileSync(targetdir+logname).toString().replace(/(?:\r\n|\r|\n)/g, '<br>');
+		curlog = curlog.replace(/(?:\t)/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
 	} else {
 		curlog = "<em>Output log does not exist</em>\n";
 	}
