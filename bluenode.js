@@ -21,6 +21,7 @@ var execslots = config.execslots;
 var exectimeout = config.exectimeout; 
 var title = config.title;
 var infolink = config.infolink;
+var classkey = config.classkey;
 
 //var usersjson = fs.readFileSync(__dirname + "/users.json");
 var usersjson = fs.readFileSync("users.json");
@@ -271,7 +272,8 @@ app.get('/exec.html', function(req,res) {
 	
 	fs.appendFileSync(targetdir+logname, formatteddate() + ' New exec request queued, current position: ' + execreqqueue.length + "\n");
 
-	serveMessage(res, "exec request queued");
+	//serveMessage(res, "exec request queued");
+	serveIndex(req, res, "Exec request queued!");
 });
 
 for ( var key in targets) {
@@ -300,6 +302,29 @@ app.get('/'+infolink, function(req,res) {
 	res.sendFile(process.cwd()+"/"+infolink);
 });
 
+app.get('/adduser.html', function(req,res) {
+	var newid = req.query.userid;
+	var newkey = req.query.key;
+	var ckey = req.query.ckey;
+	if ( ckey && classkey && ckey == classkey ) {
+		if ( newid && ! (newid in users) ) {
+			users[newid] = newkey;
+			let newusersjson = JSON.stringify(users, null, "\t");
+			fs.writeFileSync('users.json', newusersjson);
+			serveMessage(res, "User " + newid + " created!");
+			
+			consolelog("New user " + newid + " created");
+		} else {
+			serveMessage(res, "User " + newid + " already exists!");
+			consolelog("Duplicate user " + newid + " creation attempt");
+		}
+	} else {
+		serveMessage(res, "Class key incorrect!");
+		consolelog("User creation attempt " + newid + " with wrong class key");
+	}
+	//serve
+});
+
 function checkPidAlive(pid) {
 	if ( fs.existsSync("/proc/"+pid) ) return true;
 	return false;
@@ -311,7 +336,7 @@ function pruneLongProc() {
 		if ( !execreqmap[uid].exectime ) continue;
 
 		if (!checkPidAlive(execreqmap[uid].pid)) {
-			console.log("Process " + execreqmap[uid].pid + " done" );
+			consolelog("Process " + execreqmap[uid].pid + " done" );
 			delete execreqmap[uid];
 			var dtargetdir = updir+uid+'/';
 			fs.appendFileSync(targetdir+logname, formatteddate() + ' Process finished\n');
@@ -418,3 +443,4 @@ if ( process.argv.length > 2 ) {
 }
 
 app.listen(port);
+

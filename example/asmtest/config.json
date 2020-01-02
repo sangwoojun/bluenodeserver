@@ -13,5 +13,6 @@
 	"exec":"exec.sh",
 	"execslots":"2",
 	"exectimeout":"120",
-	"maxsize":"1048576"
+	"maxsize":"1048576",
+	"classkey":"hello152"
 }
