@@ -259,6 +259,9 @@ app.get('/exec.html', function(req,res) {
 
 	
 	var targetdir = updir+req.session.userid+'/';
+	if ( !fs.existsSync(targetdir) ) {
+		fs.mkdirSync(targetdir);
+	}
 	if ( fs.existsSync(targetdir+logname) ) {
 		var stats = fs.statSync(targetdir+logname);
 		var mtime = stats.mtime.toString().replace(/ /g, "_");
@@ -384,7 +387,7 @@ function startNextExec() {
 
 	// copy src to uploads/userid
 	//fs.copyFileSync("src", updir+userid+"/");
-	childproc.execSync("rm -r " + updir+userid+"/src");
+	childproc.execSync("rm -rf " + updir+userid+"/src");
 	childproc.execSync("cp -r src " + updir+userid+"/");
 	// copy exec.sh to uploads/userid/src
 	fs.copyFileSync("exec.sh", updir+userid+"/src/exec.sh");

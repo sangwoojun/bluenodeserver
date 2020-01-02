@@ -16,6 +16,7 @@ endinterface
 
 (* synthesize *)
 module mkProcessor(ProcessorIfc);
+	Reg#(Bit#(32)) fetched_cnt <- mkReg(0);
 
 	FIFOF#(F2D) f2d <- mkSizedFIFOF(2);
     FIFOF#(D2E) d2e <- mkSizedFIFOF(2);
@@ -31,18 +32,20 @@ module mkProcessor(ProcessorIfc);
 	FIFOF#(Word) redirectPcQ <- mkSizedFIFOF(2);
 	Reg#(Word)  pc <- mkReg(0);
 	rule doFetch (stage == Fetch);
-		let next_pc = pc + 4;
+		let fetch_pc = pc;
 		if ( redirectPcQ.notEmpty ) begin
 			redirectPcQ.deq;
-			next_pc = redirectPcQ.first;
-			$write( "Fetch jumping to %x\n", pc );
+			fetch_pc = redirectPcQ.first;
 		end 
 
-		mem.iMem.req(MemReq32{write:False,addr:pc,data:?,size:Word});
-		f2d.enq(F2D {pc: pc, ppc: pppc, epoch: next_epochF});
-		pc <= next_pc;
-		$write( "Fetching %x\n", pc );
+		mem.iMem.req(MemReq32{write:False,addr:fetch_pc,data:?,size:Word});
+		let predict_pc = fetch_pc + 4;
+		pc <= predict_pc;
+		f2d.enq(F2D {pc: fetch_pc, ppc: predict_pc, epoch: ?});
+		$write( "Instruction %04d: Fetching from %04x\n", fetched_cnt, fetch_pc );
 		stage <= Decode;
+
+		fetched_cnt <= fetched_cnt + 1;
 	endrule
 
 
@@ -60,10 +63,10 @@ module mkProcessor(ProcessorIfc);
 		f2d.deq;
 
 		stage <= Execute;
-		$display( "Decoding %x %x", x.pc, inst );
+		//$display( "Decoding %x %x", x.pc, inst );
 	endrule
 
-	Reg#(Bool)  epoch <- mkReg(False);
+	//Reg#(Bool)  epoch <- mkReg(False);
     //Reg#(RIndx) dstLoad <- mkReg(0);
 	rule doExecute (stage == Execute);
 		let x = d2e.first;          
@@ -74,19 +77,19 @@ module mkProcessor(ProcessorIfc);
 
 		let eInst = exec(dInst, rVal1, rVal2, pcE);
 		
-		if (epochE == epoch) begin  // right-path instruction
+		//if (epochE == epoch) begin  // right-path instruction
 			if (eInst.iType == Unsupported) begin
 				$display("Reached unsupported instruction");
 				//$display("Total Clock Cycles = %d\nTotal Instruction Count = %d", cycles, instCnt);
 				$display("Dumping the state of the processor");
 				$display("pc = 0x%x", x.pc);
-				//rf.displayRFileInSimulation;
+				rf.displayRFileInSimulation;
 				$display("Quitting simulation.");
 				$finish;
 			end
 			let misprediction = eInst.nextPC != ppc;
 			if ( misprediction ) begin
-				epoch <= !epoch;
+				//epoch <= !epoch;
 				redirectPcQ.enq(eInst.nextPC);
 			end
 
@@ -95,7 +98,7 @@ module mkProcessor(ProcessorIfc);
 				//dstLoad <= fromMaybe(?, eInst.dst); // FIXME to FIFO
 				e2m.enq(E2M{dst:fromMaybe(?, eInst.dst),extendSigned:dInst.extendSigned,size:dInst.size});
 				stage <= Mem;
-				$write( "mem read from%x\n", eInst.addr);
+				$write( "mem read from %x\n", eInst.addr);
 			end 
 			else if (eInst.iType == STORE) begin
 				//if ( eInst.addr == 'h4000_1000)
@@ -111,8 +114,8 @@ module mkProcessor(ProcessorIfc);
 				end
 				stage <= Fetch;
 			end
-		end
-		$display( "Executing %x", x.pc );
+		//end
+		//$display( "Executing %x", x.pc );
 	endrule
 
 	rule doWriteback (stage == Mem);
@@ -141,7 +144,7 @@ module mkProcessor(ProcessorIfc);
 		rf.wr(r.dst, dw);
 		
 		stage <= Fetch;
-		$display( "doing Mem %x", data );
+		//$display( "doing Mem %x", data );
 	endrule
 
 

@@ -49,7 +49,7 @@ void init() {
 			tok = strtok(NULL, " \t");
 			int ans = atoi(tok);
 			g_answermap[addr] = ans;
-			printf( "Answer for addr %d is %d\n", addr, ans );
+			//printf( "Answer for addr %d is %d\n", addr, ans );
 		}
 	}
 }

@@ -5,3 +5,4 @@ echo ""
 date
 echo "Running..."
 echo "----------------------"
+./emulator/obj/bsim
