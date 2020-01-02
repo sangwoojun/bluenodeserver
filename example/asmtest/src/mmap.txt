@@ -1,6 +1,5 @@
 # comment: + to load bin to memory location, ? to check if user write to location equals provided answer
 +0 obj/binary.bin
-+1000 sample00_answer7.dat
-?2000 0
-?2004 2
-?2048 8
++8192 modeli_32.dat
++16384 sample00_answer7.dat
+?24576 2

@@ -5,6 +5,7 @@
 
 #include <map>
 
+// 64 KBs
 #define MEM_SIZE 0x10000
 bool g_init = false;
 void* g_mem;
@@ -41,6 +42,7 @@ void init() {
 			fseek(fdin, 0, SEEK_SET);
 			uint8_t* loadp = ((uint8_t*)g_mem)+addr;
 			int readb = fread(loadp, 1, sz, fdin);
+			//printf( "Loading data file %s to 0x%x, size 0x%x\n", tok, addr, sz);
 		}
 		if ( rbuf[0] == '?' ) { // answer check
 			char* tok = strtok(rbuf, " \t");

@@ -352,6 +352,22 @@ function pruneLongProc() {
 			continue;
 		}
 
+		var targetdir = updir+uid+'/';
+		var stats = fs.statSync(targetdir+logname);
+		if ( stats["size"] >= config.maxsize ) {
+			process.kill(-execreqmap[uid].child.pid);
+			
+			consolelog("Process " + execreqmap[uid].pid + " from user " + uid + " killed due to output file size limiation of " + config.maxsize );
+			delete execreqmap[uid];
+			fs.appendFileSync(targetdir+logname, formatteddate() + ' Process killed due to output file size limit\n');
+			if ( cntinflight > 0 ) {
+				cntinflight = cntinflight - 1;
+			} else {
+				consolelog("ERROR! proc exited after cntinflight == 0, "+uid+"\n");
+			}
+			continue;
+		}
+
 		if ( now - execreqmap[uid].exectime < exectimeout*1000 ) continue;
 
 		if (checkPidAlive(execreqmap[uid].pid)) {
@@ -360,7 +376,6 @@ function pruneLongProc() {
 
 			consolelog("Process " + execreqmap[uid].pid + " from user " + uid + " killed due to timeout of " + exectimeout + " s" );
 			delete execreqmap[uid];
-			var targetdir = updir+uid+'/';
 			fs.appendFileSync(targetdir+logname, formatteddate() + ' Process killed due to timeout of '+exectimeout+'s\n');
 			if ( cntinflight > 0 ) {
 				cntinflight = cntinflight - 1;
@@ -394,29 +409,17 @@ function startNextExec() {
 	// run exec at uploads/userid/src
 	var child = childproc.spawn('bash', ["exec.sh"],{"cwd":updir+userid+"/src/", detached:true});
 	child.stdout.on('data', function(data) {
-		fs.appendFileSync(targetdir+logname, "" + data );
-	});
-	child.stderr.on('data', function(data) {
-		fs.appendFileSync(targetdir+logname, "" + data );
-	});
-	/*
-	var child = childproc.exec('bash exec.sh >> ../'+logname+' 2>&1',{"cwd":updir+userid+"/src/", maxBuffer: 1024*1024*4}, function (e, stdout, stderr) {
-		for (var uid in execreqmap) {
-			if (!checkPidAlive(execreqmap[uid].pid)) {
-				console.log("Process " + execreqmap[uid].pid + " done" );
-				delete execreqmap[uid];
-				var dtargetdir = updir+uid+'/';
-				fs.appendFileSync(targetdir+logname, formatteddate() + ' Process finished\n');
-
-				if ( cntinflight > 0 ) {
-					cntinflight = cntinflight - 1;
-				} else {
-					console.log("ERROR! proc exited after cntinflight == 0\n");
-				}
-			}
+		var stats = fs.statSync(targetdir+logname);
+		if ( stats["size"] <= config.maxsize ) {
+			fs.appendFileSync(targetdir+logname, "" + data );
 		}
 	});
-	*/
+	child.stderr.on('data', function(data) {
+		var stats = fs.statSync(targetdir+logname);
+		if ( stats["size"] <= config.maxsize ) {
+			fs.appendFileSync(targetdir+logname, "" + data );
+		}
+	});
 	// save timestamp to map
 	var timeStamp = Math.floor(Date.now());
 	execreqmap[userid].exectime  = timeStamp;

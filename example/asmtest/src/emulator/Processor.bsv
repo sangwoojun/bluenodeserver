@@ -98,19 +98,19 @@ module mkProcessor(ProcessorIfc);
 				//dstLoad <= fromMaybe(?, eInst.dst); // FIXME to FIFO
 				e2m.enq(E2M{dst:fromMaybe(?, eInst.dst),extendSigned:dInst.extendSigned,size:dInst.size});
 				stage <= Mem;
-				$write( "mem read from %x\n", eInst.addr);
+				$write( "\t mem read from %x\n", eInst.addr);
 			end 
 			else if (eInst.iType == STORE) begin
 				//if ( eInst.addr == 'h4000_1000)
 					//$display("Total Clock Cycles = %d\nTotal Instruction Count = %d", cycles, instCnt);
 				mem.dMem.req(MemReq32{write:True,addr:eInst.addr,data:eInst.data,size:dInst.size});
 				stage <= Fetch;
-				$write( "mem write %x to %x\n", eInst.data, eInst.addr);
+				$write( "\t mem write %x to %x\n", eInst.data, eInst.addr);
 			end
 			else begin
 				if(isValid(eInst.dst)) begin
 					rf.wr(fromMaybe(?, eInst.dst), eInst.data);
-					$write( "rf writing %x to %d\n", fromMaybe(?,eInst.dst), eInst.data );
+					$write( "\t exec result writing %x to reg %d\n", eInst.data, fromMaybe(?,eInst.dst)  );
 				end
 				stage <= Fetch;
 			end
@@ -144,7 +144,7 @@ module mkProcessor(ProcessorIfc);
 		rf.wr(r.dst, dw);
 		
 		stage <= Fetch;
-		//$display( "doing Mem %x", data );
+		$display( "\t mem read result %x written to reg %x", data, r.dst );
 	endrule
 
 
