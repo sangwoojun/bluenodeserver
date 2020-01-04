@@ -95,6 +95,8 @@ main( int argc, char** argv) {
 		}
 		printf( "\n");
 		fwrite(databuf, sizeof(int32_t), size, fdat);
+		fprintf(fmap, "?12292 %d\n", databuf[0]);
+		fprintf(fmap, "?12296 %d\n", databuf[1]);
 
 		std::sort(databuf, databuf + size);
 		printf( "Sorted: " );
@@ -106,8 +108,6 @@ main( int argc, char** argv) {
 
 
 		fprintf(fmap, "?12288 %d\n", databuf[size/2]);
-		fprintf(fmap, "?12292 %d\n", databuf[0]);
-		fprintf(fmap, "?12296 %d\n", databuf[1]);
 		fclose(fmap);
 		fclose(fdat);
 	} else {
