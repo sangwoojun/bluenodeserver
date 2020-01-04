@@ -81,6 +81,7 @@ extern "C" void memWrite(uint32_t addr, uint32_t bytes, uint32_t data, uint32_t 
 		} else {
 			printf( "\t\t** Results INCORRECT! Writing %d to address %x, should be %d\n", given, addr, correct );
 		}
+		fflush(stdout);
 		return;
 	}
 	//printf( "Mem write req (%d) %x, %x\n", bytes, addr, data );

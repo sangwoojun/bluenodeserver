@@ -7,7 +7,7 @@ import Defines::*;
 import Decode::*;
 import Execute::*;
 
-typedef enum {Fetch, Decode, Execute, Mem} ProcStage deriving (Eq,Bits);
+typedef enum {Fetch, Decode, Execute, Mem, Halt} ProcStage deriving (Eq,Bits);
 
 interface ProcessorIfc;
 	method ActionValue#(MemReq32) memReq;
@@ -78,6 +78,13 @@ module mkProcessor(ProcessorIfc);
 		let eInst = exec(dInst, rVal1, rVal2, pcE);
 		
 		//if (epochE == epoch) begin  // right-path instruction
+
+			let misprediction = eInst.nextPC != ppc;
+			if ( misprediction ) begin
+				//epoch <= !epoch;
+				redirectPcQ.enq(eInst.nextPC);
+			end
+
 			if (eInst.iType == Unsupported) begin
 				$display("Reached unsupported instruction");
 				//$display("Total Clock Cycles = %d\nTotal Instruction Count = %d", cycles, instCnt);
@@ -85,15 +92,9 @@ module mkProcessor(ProcessorIfc);
 				$display("pc = 0x%x", x.pc);
 				rf.displayRFileInSimulation;
 				$display("Quitting simulation.");
-				$finish;
+				stage <= Halt;
 			end
-			let misprediction = eInst.nextPC != ppc;
-			if ( misprediction ) begin
-				//epoch <= !epoch;
-				redirectPcQ.enq(eInst.nextPC);
-			end
-
-			if (eInst.iType == LOAD) begin
+			else if (eInst.iType == LOAD) begin
 				mem.dMem.req(MemReq32{write:False,addr:eInst.addr,data:?,size:dInst.size});
 				//dstLoad <= fromMaybe(?, eInst.dst); // FIXME to FIFO
 				e2m.enq(E2M{dst:fromMaybe(?, eInst.dst),extendSigned:dInst.extendSigned,size:dInst.size});
@@ -145,6 +146,14 @@ module mkProcessor(ProcessorIfc);
 		
 		stage <= Fetch;
 		$display( "\t mem read result %x written to reg %x", data, r.dst );
+	endrule
+
+	Reg#(Bit#(32)) haltcycles <- mkReg(0);
+	rule haltstate (stage == Halt);
+		if ( haltcycles >= 1024 ) $finish;
+		else begin
+			haltcycles <= haltcycles + 1;
+		end
 	endrule
 
 

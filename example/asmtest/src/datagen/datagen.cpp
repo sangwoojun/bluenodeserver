@@ -50,6 +50,8 @@ main( int argc, char** argv) {
 		printf( "Max value is %d at %d\n", max, idx );
 		fwrite(databuf, sizeof(int32_t), size, fdat);
 		fprintf(fmap, "?12288 %d\n", idx);
+		fprintf(fmap, "?12292 %d\n", databuf[0]);
+		fprintf(fmap, "?12296 %d\n", databuf[1]);
 		fclose(fmap);
 		fclose(fdat);
 	} else if ( mode.find("gcd") != std::string::npos ) {
@@ -74,10 +76,12 @@ main( int argc, char** argv) {
 			printf( "%d %d\n", a,b  );
 		}
 
-		printf( "GCD is %d", a );
+		printf( "GCD is %d\n", a );
 
 
 		fprintf(fmap, "?12288 %d\n", a);
+		fprintf(fmap, "?12292 %d\n", databuf[0]);
+		fprintf(fmap, "?12296 %d\n", databuf[1]);
 		fclose(fmap);
 		fclose(fdat);
 
@@ -102,6 +106,8 @@ main( int argc, char** argv) {
 
 
 		fprintf(fmap, "?12288 %d\n", databuf[size/2]);
+		fprintf(fmap, "?12292 %d\n", databuf[0]);
+		fprintf(fmap, "?12296 %d\n", databuf[1]);
 		fclose(fmap);
 		fclose(fdat);
 	} else {

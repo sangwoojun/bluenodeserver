@@ -1,14 +1,8 @@
-echo "Building..."
-cd datagen
-make
-
-echo ""
-echo ""
-echo ""
-echo ""
 echo "***************************************************************"
 echo "** Running Benchmark 'max'"
 echo "***************************************************************"
+
+cd datagen
 
 ./obj/datagen max 32
 

@@ -6,26 +6,20 @@ LDFLAGS=-march=rv32im -nostdlib -nostartfiles -Wl,-T./bare-link.ld
 OBJDUMPFLAGS=-s -d -Mno-aliases -Mnumeric
 
 
-all:
+max: entry_max.s ../assembly.s ./support.s
 	mkdir -p obj
-	$(RISCV_TARGET)gcc $(CFLAGS) $(LDFLAGS) ./entry.s ../assembly.s  -o ./obj/binary.elf
+	$(RISCV_TARGET)gcc $(CFLAGS) $(LDFLAGS) ./entry_max.s ../assembly.s ./support.s  -o ./obj/binary.elf
 	$(RISCV_TARGET)objdump $(OBJDUMPFLAGS) ./obj/binary.elf
 	cd obj; bash ../strip.sh
 
-max:
+gcd: entry_sort.s ../assembly.s ./support.s
 	mkdir -p obj
-	$(RISCV_TARGET)gcc $(CFLAGS) $(LDFLAGS) ./entry_max.s ../assembly.s  -o ./obj/binary.elf
+	$(RISCV_TARGET)gcc $(CFLAGS) $(LDFLAGS) ./entry_gcd.s ../assembly.s  ./support.s -o ./obj/binary.elf
 	$(RISCV_TARGET)objdump $(OBJDUMPFLAGS) ./obj/binary.elf
 	cd obj; bash ../strip.sh
 
-gcd:
+sort: entry_sort.s ../assembly.s ./support.s
 	mkdir -p obj
-	$(RISCV_TARGET)gcc $(CFLAGS) $(LDFLAGS) ./entry_gcd.s ../assembly.s  -o ./obj/binary.elf
-	$(RISCV_TARGET)objdump $(OBJDUMPFLAGS) ./obj/binary.elf
-	cd obj; bash ../strip.sh
-
-sort:
-	mkdir -p obj
-	$(RISCV_TARGET)gcc $(CFLAGS) $(LDFLAGS) ./entry_sort.s ../assembly.s  -o ./obj/binary.elf
+	$(RISCV_TARGET)gcc $(CFLAGS) $(LDFLAGS) ./entry_sort.s ../assembly.s ./support.s  -o ./obj/binary.elf
 	$(RISCV_TARGET)objdump $(OBJDUMPFLAGS) ./obj/binary.elf
 	cd obj; bash ../strip.sh
